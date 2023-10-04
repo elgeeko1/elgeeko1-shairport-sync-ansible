@@ -1,0 +1,42 @@
+---
+- name: Docker pull mikebrady/shairport-sync:latest
+  community.general.docker_image:
+    name: mikebrady/shairport-sync:latest
+    source: pull
+    force_source: true
+
+- name: Get group ID for audio
+  ansible.builtin.getent:
+    database: group
+    key: audio
+
+- name: Deploy configuration
+  ansible.builtin.template:
+    src:  shairport-sync.conf.j2
+    dest: "{{ shairport_path }}/shairport-sync.conf"
+  register: shairport_config
+
+- name: Start shairport-sync docker container
+  community.general.docker_container:
+    name: shairport-sync
+    image: mikebrady/shairport-sync:latest
+    state: started
+    restart: "{{ shairport_config.changed }}"
+    restart_policy: unless-stopped
+    comparisons:
+      '*': strict
+    keep_volumes: false
+    hostname: "{{ inventory_hostname }}"
+    volumes:
+      - "{{ shairport_path }}/shairport-sync.conf:/etc/shairport-sync.conf:ro"
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+      # mDNS
+      #- /var/run/dbus:/var/run/dbus
+      # allow querying USB information
+      - /run/udev:/run/udev:ro 
+    devices:
+      - /dev/bus/usb
+      - /dev/snd
+    network_mode: host
+    log_driver: "local"  # default doesn't log rotate

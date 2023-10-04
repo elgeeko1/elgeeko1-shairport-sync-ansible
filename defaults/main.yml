@@ -1,0 +1,2 @@
+# filesystem location to save persistent data
+shairport_path: /opt/shairport-sync

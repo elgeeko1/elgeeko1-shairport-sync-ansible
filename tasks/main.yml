@@ -1,0 +1,15 @@
+---
+- name: apt update cache
+  ansible.builtin.apt:
+    update_cache: true
+    cache_valid_time: 3600 # 1 hr
+  become: true
+
+- name: Configure packages
+  ansible.builtin.import_tasks: packages.yml
+
+- name: Configure filesystem
+  ansible.builtin.import_tasks: filesystem.yml
+
+- name: Start shairport container
+  ansible.builtin.import_tasks: shairport.yml
